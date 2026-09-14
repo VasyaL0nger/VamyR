@@ -82,7 +82,6 @@ for idx, ship in enumerate(ships):
     with st.container(border=True):
         st.image(ship["img"], use_container_width=True)
         
-        # ИСПРАВЛЕНО: Передаем число 2 в функцию колонок, чтобы не вылетала ошибка!
         col_title, col_price = st.columns(2)
         with col_title: st.markdown(f"### {ship['name']}")
         with col_price: st.markdown(f"#### `{ship['price']}`")
@@ -90,24 +89,25 @@ for idx, ship in enumerate(ships):
         
         with st.expander(f"🛍️ Оформить заказ на {ship['name']}"):
             c_name = st.text_input("Ваше Имя:", key=f"name_{idx}")
-            c_phone = st.text_input("Ваш Телефон / Telegram:", key=f"phone_{idx}")
+            # ОСТАВЛЕН ТОЛЬКО ТЕЛЕГРАМ
+            c_tg = st.text_input("Ваш Telegram для связи:", placeholder="@username", key=f"tg_{idx}")
             
             if st.button("✅ ПОДТВЕРДИТЬ ЗАКАЗ", key=f"btn_{idx}", use_container_width=True):
-                if c_name and c_phone:
+                if c_name and c_tg:
                     orders.append({
                         "time": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "ship": ship["name"],
                         "price": ship["price"],
                         "client_name": c_name,
-                        "client_contact": c_phone
+                        "client_contact": c_tg
                     })
                     save_data(orders, DB_ORDERS)
                     st.balloons()
-                    st.success("✨ Заявка принята! Компания VamyR свяжется с вами.")
+                    st.success("✨ Заявка принята! Компания VamyR свяжется с вами в Telegram.")
                     time.sleep(1)
                     st.rerun()
                 else:
-                    st.error("⚠️ Введите имя и контакты!")
+                    st.error("⚠️ Пожалуйста, введите ваше имя и Telegram, чтобы директор мог с вами связаться!")
 
 st.write("---")
 
@@ -127,7 +127,7 @@ if pass_input == ADMIN_PASSWORD:
             **Заказ №{o_idx+1}** ({ord['time']})
             *   🚢 **Товар:** {ord['ship']} (Цена: `{ord['price']}`)
             *   👤 **Клиент:** {ord['client_name']}
-            *   📞 **Контакты:** `{ord['client_contact']}`
+            *   ✈️ **Telegram для связи:** `{ord['client_contact']}`
             """)
             st.write("---")
             
@@ -139,3 +139,4 @@ if pass_input == ADMIN_PASSWORD:
             st.rerun()
 elif pass_input:
     st.error("❌ Неверный пароль директора!")
+
