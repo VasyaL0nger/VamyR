@@ -41,7 +41,7 @@ if not ships:
 st.sidebar.subheader("🎨 Сменить стиль верфи")
 theme_choice = st.sidebar.radio("Выбери тему сайта:", ["🌌 По умолчанию", "🌊 Глубокое Море", "🏴‍☠️ Пиратская Гавань"], horizontal=False)
 
-# Внедрение CSS-стилей в зависимости от выбранной темы
+# ИСПРАВЛЕНО: Теперь везде используется строго unsafe_allow_html=True
 if theme_choice == "🌊 Глубокое Море":
     st.markdown("""
         <style>
@@ -51,7 +51,7 @@ if theme_choice == "🌊 Глубокое Море":
         .stButton>button { background-color: #0077b6 !important; color: white !important; border-radius: 20px !important; border: 1px solid #90e0ef !important; }
         h1, h2, h3, h4 { color: #90e0ef !important; }
         </style>
-    """, unsafe_allow_stdio=True)
+    """, unsafe_allow_html=True)
 elif theme_choice == "🏴‍☠️ Пиратская Гавань":
     st.markdown("""
         <style>
@@ -62,7 +62,7 @@ elif theme_choice == "🏴‍☠️ Пиратская Гавань":
         h1, h2, h3, h4 { color: #eab308 !important; }
         code { color: #fef08a !important; background-color: #44403c !important; }
         </style>
-    """, unsafe_allow_stdio=True)
+    """, unsafe_allow_html=True)
 
 # --- ГЛАВНАЯ ШАПКА САЙТА VAMYR ---
 st.title("🚢 VamyR — Мастерская Мини-Кораблей")
@@ -165,3 +165,4 @@ if pass_input == ADMIN_PASSWORD:
             st.rerun()
 elif pass_input:
     st.error("❌ Неверный пароль директора!")
+
