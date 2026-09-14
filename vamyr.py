@@ -7,7 +7,7 @@ st.set_page_config(page_title="VamyR — Мини-Корабли", layout="cente
 
 DB_SHIPS = "db_ships.json"
 DB_ORDERS = "db_orders.json"
-ADMIN_PASSWORD = "vamyradmin777"  # ТВОЙ ПАРОЛЬ ДЛЯ ПРОСМОТРА ЗАКАЗОВ
+ADMIN_PASSWORD = "vamyradmin777"  # ТВОЙ ПАРОЛЬ ДЛЯ ПРОСМОТРА ЗАКАЗОВ И АДМИНКИ
 
 # --- ФУНКЦИИ БАЗЫ ДАННЫХ ---
 def load_data(filename):
@@ -116,48 +116,81 @@ else:
                 st.rerun()
 
 st.write("---")
-# --- СКРЫТАЯ АДМИН-ПАНЕЛЬ (УПРАВЛЕНИЕ ОБЪЯВЛЕНИЯМИ) ---
-with st.expander("🛠️ Панель управления VamyR (Добавить объявление)"):
-    st.subheader("🆕 Опубликовать новый корабль на витрину")
-    new_name = st.text_input("Название корабля:", placeholder="Например: Линкор 'Виктория'")
-    new_price_text = st.text_input("Цена корабля:", placeholder="Например: 300 грн")
-    new_desc = st.text_area("Описание модели:", placeholder="Материалы, размеры...")
-    new_img = st.text_input("Ссылка на photo корабля (URL):")
-    new_status = st.selectbox("Текущий статус модели:", ["Планируется...", "В разработке...", "Выставлен..."])
+# ================= ПАНЕЛЬ УПРАВЛЕНИЯ ДИРЕКТОРА (ЗАПАРОЛЕНО) =================
+st.subheader("🛠️ Вход в закрытый док компании VamyR")
+pass_input = st.text_input("Введите секретный пароль директора для управления сайтом:", type="password", key="main_admin_pass")
+
+if pass_input == ADMIN_PASSWORD:
+    st.success("🔓 Доступ к верфи и заказам разрешен, капитан Longer!")
     
-    new_stock = st.number_input("Количество штук в наличии (только для статуса 'Выставлен...'):", min_value=1, value=1)
-    
-    if st.button("🚀 ОПУБЛИКОВАТЬ ОБЪЯВЛЕНИЕ", use_container_width=True):
-        if new_name and new_price_text and new_desc:
-            img_to_save = new_img if new_img else "https://unsplash.com"
-            ships.append({
-                "name": new_name, 
-                "price": new_price_text, 
-                "desc": new_desc, 
-                "img": img_to_save, 
-                "status": new_status,
-                "stock": int(new_stock)
-            })
-            save_data(ships, DB_SHIPS)
-            st.success("🎉 Корабль успешно выставлен на витрину!")
-            time.sleep(1)
-            st.rerun()
-        else: st.error("⚠️ Заполните все обязательные поля!")
-            
+    # --- 1. БЛОК ДОБАВЛЕНИЯ И УДАЛЕНИЯ КОРАБЛЕЙ (ИСПРАВЛЕНО И ЗАЩИЩЕНО) ---
+    with st.expander("📦 Управление витриной (Добавить/Удалить корабль)"):
+        st.subheader("🆕 Опубликовать новый корабль на витрину")
+        new_name = st.text_input("Название корабля:", placeholder="Например: Линкор 'Виктория'")
+        new_price_text = st.text_input("Цена корабля:", placeholder="Например: 300 грн")
+        new_desc = st.text_area("Описание модели:", placeholder="Материалы, размеры...")
+        new_img = st.text_input("Ссылка на photo корабля (URL):")
+        new_status = st.selectbox("Текущий статус модели:", ["Планируется...", "В разработке...", "Выставлен..."])
+        new_stock = st.number_input("Количество штук в наличии (только для статуса 'Выставлен...'):", min_value=1, value=1)
+        
+        if st.button("🚀 ОПУБЛИКОВАТЬ ОБЪЯВЛЕНИЕ", use_container_width=True):
+            if new_name and new_price_text and new_desc:
+                img_to_save = new_img if new_img else "https://unsplash.com"
+                ships.append({
+                    "name": new_name, 
+                    "price": new_price_text, 
+                    "desc": new_desc, 
+                    "img": img_to_save, 
+                    "status": new_status,
+                    "stock": int(new_stock)
+                })
+                save_data(ships, DB_SHIPS)
+                st.success("🎉 Корабль успешно выставлен на витрину!")
+                time.sleep(1)
+                st.rerun()
+            else: st.error("⚠️ Заполните все обязательные поля!")
+                
+        st.write("---")
+        st.subheader("🗑️ Удаление объявлений")
+        if ships:
+            ship_to_delete = st.selectbox("Выбери корабль для удаления с витрины:", range(len(ships)), format_func=lambda x: ships[x]["name"])
+            if st.button("❌ УДАЛИТЬ С ВИТРИНЫ", use_container_width=True):
+                ships.pop(ship_to_delete)
+                save_data(ships, DB_SHIPS)
+                st.success("🗑️ Удалено с витрины.")
+                time.sleep(1)
+                st.rerun()
+
+    # --- 2. БЛОК АКТИВНЫХ ЗАКАЗОВ КЛИЕНТОВ ---
     st.write("---")
-    st.subheader("🗑️ Удаление объявлений")
-    if ships:
-        ship_to_delete = st.selectbox("Выбери корабль для удаления с витрины:", range(len(ships)), format_func=lambda x: ships[x]["name"])
-        if st.button("❌ УДАЛИТЬ С ВИТРИНЫ", use_container_width=True):
-            ships.pop(ship_to_delete)
-            save_data(ships, DB_SHIPS)
-            st.success("🗑️ Удалено с витрины.")
+    st.subheader("📋 Список активных заказов:")
+    if not orders:
+        st.info("Пока нет новых заказов. Ждем клиентов! 🌊")
+    else:
+        for o_idx, ord in enumerate(orders):
+            st.markdown(f"""
+            **Заказ №{o_idx+1}** ({ord['time']})
+            *   🚢 **Выбранные товары:** {ord['ship']}
+            *   💰 **Общая стоимость с доставкой:** `{ord['price']}`
+            *   🛡️ **Сумма требуемой предоплаты:** `{ord.get('downpayment', '0 грн')}`
+            *   👤 **Клиент:** {ord['client_name']}
+            *   ✈️ **Telegram для связи:** `{ord['client_contact']}`
+            """)
+            st.write("---")
+            
+        if st.button("🗑️ ОЧИСТИТЬ ВСЕ ЗАКАЗЫ", use_container_width=True):
+            orders = []
+            save_data(orders, DB_ORDERS)
+            st.success("Список заказов успешно очищен!")
             time.sleep(1)
             st.rerun()
+            
+elif pass_input: 
+    st.error("❌ Неверный пароль директора верфи!")
 
 st.write("---")
 
-# --- ВИТРИНА ДЛЯ ПОКУПАТЕЛЕЙ ---
+# --- ВИТРИНА ДЛЯ ПОКУПАТЕЛЕЙ (ОТКРЫТА ВСЕГДА) ---
 st.subheader("🛒 Модели в наличии:")
 for idx, ship in enumerate(ships):
     with st.container(border=True):
@@ -211,33 +244,5 @@ for idx, ship in enumerate(ships):
             st.rerun()
 
 st.write("---")
-
-# ================= СЕКРЕТНЫЙ СПИСОК ЗАКАЗОВ ДЛЯ ДИРЕКТОРА =================
-st.subheader("🔒 Вход для генерального директора VamyR")
-pass_input = st.text_input("Введите секретный пароль директора:", type="password")
-
-if pass_input == ADMIN_PASSWORD:
-    st.success("🔓 Доступ разрешен. База данных заказов загружена!")
-    st.subheader("📋 Список активных заказов:")
-    if not orders:
-        st.info("Пока нет новых заказов. Ждем клиентов! 🌊")
-    else:
-        for o_idx, ord in enumerate(orders):
-            st.markdown(f"""
-            **Заказ №{o_idx+1}** ({ord['time']})
-            *   🚢 **Выбранные товары:** {ord['ship']}
-            *   💰 **Общая стоимость с доставкой:** `{ord['price']}`
-            *   🛡️ **Сумма требуемой предоплаты:** `{ord.get('downpayment', '0 грн')}`
-            *   👤 **Клиент:** {ord['client_name']}
-            *   ✈️ **Telegram для связи:** `{ord['client_contact']}`
-            """)
-            st.write("---")
-            
-        if st.button("🗑️ ОЧИСТИТЬ ВСЕ ЗАКАЗЫ", use_container_width=True):
-            orders = []
-            save_data(orders, DB_ORDERS)
-            st.success("Список заказов успешно очищен!")
-            time.sleep(1)
-            st.rerun()
-elif pass_input: st.error("❌ Неверный пароль директора!")
+st.caption("© 2026 VamyR Inc. Все права защищены. Сделано с любовью к морю.")
 
