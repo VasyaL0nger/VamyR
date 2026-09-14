@@ -29,14 +29,15 @@ orders = load_data(DB_ORDERS)
 if "cart" not in st.session_state:
     st.session_state.cart = []
 
-# Стартовый контент
+# Стартовый контент с новым полем статуса
 if not ships:
     ships = [
         {
             "name": "⚓ Галеон 'Чёрная Жемчужина'",
             "price": "3500 грн",
             "desc": "Детализированная mini-модель пиратского корабля. Сделан из дерева, паруса из плотной ткани.",
-            "img": "https://unsplash.com"
+            "img": "https://unsplash.com",
+            "status": "Выставлен..."
         }
     ]
     save_data(ships, DB_SHIPS)
@@ -81,13 +82,13 @@ else:
     items_names = []
     
     with st.container(border=True):
-        st.write("📋 Список выбранных кораблей:")
+        st.write("📋 Список выбранных кораблей и предзаказов:")
         for c_idx, cart_item in enumerate(st.session_state.cart):
-            st.markdown(f"• **{cart_item['name']}** — `{cart_item['price']}`")
+            st.markdown(f"• **{cart_item['name']}** ({cart_item['status']}) — `{cart_item['price']}`")
             total_price += cart_item['price_int']
-            items_names.append(cart_item['name'])
+            items_names.append(f"{cart_item['name']} [{cart_item['status']}]")
             
-        st.markdown(f"### 💰 Общая сумма: `{total_price:,} грн`".replace(",", " "))
+        st.markdown(f"### 💰 Общая сумма к оплате: `{total_price:,} грн`".replace(",", " "))
         
         c_name = st.text_input("Ваше Имя:", key="cart_name_input")
         c_tg = st.text_input("Ваш Telegram для связи:", placeholder="@username", key="cart_tg_input")
@@ -122,27 +123,30 @@ st.write("---")
 with st.expander("🛠️ Панель управления VamyR (Добавить объявление)"):
     st.subheader("🆕 Опубликовать новый корабль на витрину")
     new_name = st.text_input("Название корабля:", placeholder="Например: Линкор 'Виктория'")
-    new_price_text = st.text_input("Цена корабля (пиши просто число или с текстом):", placeholder="Например: 300 грн")
+    new_price_text = st.text_input("Цена корабля:", placeholder="Например: 300 грн")
     new_desc = st.text_area("Описание модели:", placeholder="Материалы, размеры...")
     new_img = st.text_input("Ссылка на photo корабля (URL):")
+    
+    # ТРИ ТВОИХ СЛУЖЕБНЫХ СТАТУСА
+    new_status = st.selectbox("Текущий статус модели:", ["Планируется...", "В разработке...", "Выставлен..."])
     
     if st.button("🚀 ОПУБЛИКОВАТЬ ОБЪЯВЛЕНИЕ", use_container_width=True):
         if new_name and new_price_text and new_desc:
             img_to_save = new_img if new_img else "https://unsplash.com"
             
-            # Добавляем объявление
             ships.append({
                 "name": new_name, 
                 "price": new_price_text, 
                 "desc": new_desc, 
-                "img": img_to_save
+                "img": img_to_save,
+                "status": new_status
             })
             save_data(ships, DB_SHIPS)
-            st.success(f"🎉 Корабль '{new_name}' успешно выставлен на витрину!")
+            st.success(f"🎉 Корабль '{new_name}' со статусом '{new_status}' успешно выставлен на витрину!")
             time.sleep(1)
             st.rerun()
         else:
-            st.error("⚠️ Заполните все поля поля!")
+            st.error("⚠️ Заполните все обязательные поля!")
             
     st.write("---")
     st.subheader("🗑️ Удаление объявлений")
@@ -165,13 +169,27 @@ for idx, ship in enumerate(ships):
     with st.container(border=True):
         st.image(ship["img"], use_container_width=True)
         
+        # Получаем статус (если у старых записей нет, ставим "Выставлен...")
+        status = ship.get("status", "Выставлен...")
+        
+        # Красивое цветовое отображение твоих статусов
+        if status == "Планируется...":
+            st.markdown("🔹 **Статус:** `⏳ Планируется к сборке`")
+            btn_label = "📬 Оставить предзаказ"
+        elif status == "В разработке...":
+            st.markdown("🔸 **Статус:** `🛠️ В процессе разработки`")
+            btn_label = "📬 Оставить предзаказ"
+        else:
+            st.markdown("🔹 **Статус:** `✅ Выставлен на продажу (Готов к отправке)`")
+            btn_label = "🛒 Добавить в корзину"
+            
         col_title, col_price = st.columns(2)
         with col_title: st.markdown(f"### {ship['name']}")
         with col_price: st.markdown(f"#### `{ship['price']}`")
         st.write(ship["desc"])
         
-        if st.button(f"🛒 Добавить в корзину", key=f"add_cart_{idx}", use_container_width=True):
-            # УМНОЕ ИЗВЛЕЧЕНИЕ ЦЕНЫ: вытаскиваем только цифры из любого текста цены
+        # Динамическая кнопка в зависимости от статуса
+        if st.button(btn_label, key=f"add_cart_{idx}", use_container_width=True):
             try:
                 only_digits = "".join([char for char in ship["price"] if char.isdigit()])
                 parsed_price = int(only_digits) if only_digits else 0
@@ -181,9 +199,10 @@ for idx, ship in enumerate(ships):
             st.session_state.cart.append({
                 "name": ship["name"], 
                 "price": ship["price"], 
-                "price_int": parsed_price
+                "price_int": parsed_price,
+                "status": status
             })
-            st.toast(f"✅ {ship['name']} добавлен в корзину!")
+            st.toast(f"✅ {ship['name']} добавлен в корзину как {status}!")
             time.sleep(0.5)
             st.rerun()
 
@@ -216,5 +235,5 @@ if pass_input == ADMIN_PASSWORD:
             st.success("Список заказов успешно очищен!")
             time.sleep(1)
             st.rerun()
-elif pass_input:
-    st.error("❌ Неверный пароль директора!")
+            elif pass_input:
+            st.error("❌ Неверный пароль директора!")
