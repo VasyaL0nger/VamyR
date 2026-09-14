@@ -37,6 +37,33 @@ if not ships:
     ]
     save_data(ships, DB_SHIPS)
 
+# ================= СИСТЕМА КАСТОМНЫХ ТЕМ ОФОРМЛЕНИЯ VAMYR =================
+st.sidebar.subheader("🎨 Сменить стиль верфи")
+theme_choice = st.sidebar.radio("Выбери тему сайта:", ["🌌 По умолчанию", "🌊 Глубокое Море", "🏴‍☠️ Пиратская Гавань"], horizontal=False)
+
+# Внедрение CSS-стилей в зависимости от выбранной темы
+if theme_choice == "🌊 Глубокое Море":
+    st.markdown("""
+        <style>
+        .stApp { background-color: #0b2545 !important; color: #eef4f8 !important; }
+        div[data-testid="stExpander"] { background-color: #134074 !important; border: 1px solid #8da9c4 !important; }
+        div[data-testid="stForm"] { background-color: #134074 !important; }
+        .stButton>button { background-color: #0077b6 !important; color: white !important; border-radius: 20px !important; border: 1px solid #90e0ef !important; }
+        h1, h2, h3, h4 { color: #90e0ef !important; }
+        </style>
+    """, unsafe_allow_stdio=True)
+elif theme_choice == "🏴‍☠️ Пиратская Гавань":
+    st.markdown("""
+        <style>
+        .stApp { background-color: #1c1917 !important; color: #f5f5f4 !important; font-family: 'Courier New', Courier, monospace !important; }
+        div[data-testid="stExpander"] { background-color: #292524 !important; border: 1px solid #ca8a04 !important; }
+        div[data-testid="stForm"] { background-color: #292524 !important; }
+        .stButton>button { background-color: #854d0e !important; color: #fef08a !important; border-radius: 4px !important; border: 2px solid #ca8a04 !important; font-weight: bold !important; }
+        h1, h2, h3, h4 { color: #eab308 !important; }
+        code { color: #fef08a !important; background-color: #44403c !important; }
+        </style>
+    """, unsafe_allow_stdio=True)
+
 # --- ГЛАВНАЯ ШАПКА САЙТА VAMYR ---
 st.title("🚢 VamyR — Мастерская Мини-Кораблей")
 st.markdown("### *Эксклюзивные модели кораблей ручной работы от компании VamyR*")
@@ -89,7 +116,6 @@ for idx, ship in enumerate(ships):
         
         with st.expander(f"🛍️ Оформить заказ на {ship['name']}"):
             c_name = st.text_input("Ваше Имя:", key=f"name_{idx}")
-            # ОСТАВЛЕН ТОЛЬКО ТЕЛЕГРАМ
             c_tg = st.text_input("Ваш Telegram для связи:", placeholder="@username", key=f"tg_{idx}")
             
             if st.button("✅ ПОДТВЕРДИТЬ ЗАКАЗ", key=f"btn_{idx}", use_container_width=True):
@@ -107,7 +133,7 @@ for idx, ship in enumerate(ships):
                     time.sleep(1)
                     st.rerun()
                 else:
-                    st.error("⚠️ Пожалуйста, введите ваше имя и Telegram, чтобы директор мог с вами связаться!")
+                    st.error("⚠️ Пожалуйста, введите ваше имя и Telegram!")
 
 st.write("---")
 
@@ -139,4 +165,3 @@ if pass_input == ADMIN_PASSWORD:
             st.rerun()
 elif pass_input:
     st.error("❌ Неверный пароль директора!")
-
