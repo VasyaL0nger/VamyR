@@ -34,10 +34,9 @@ if not ships:
     ships = [
         {
             "name": "⚓ Галеон 'Чёрная Жемчужина'",
-            "price": "3,500 грн",
+            "price": "3500 грн",
             "desc": "Детализированная mini-модель пиратского корабля. Сделан из дерева, паруса из плотной ткани.",
-            "img": "https://unsplash.com",
-            "price_num": 3500
+            "img": "https://unsplash.com"
         }
     ]
     save_data(ships, DB_SHIPS)
@@ -69,7 +68,7 @@ elif theme_choice == "🏴‍☠️ Пиратская Гавань":
     """, unsafe_allow_html=True)
 
 # --- ГЛАВНАЯ ШАПКА САЙТА VAMYR ---
-st.title("🚢 VamyR — Мастерская Мини-Кораблей")
+st.title("🚢 VamyR — Мастерская Mini-Кораблей")
 st.markdown("### *Эксклюзивные модели кораблей ручной работы от компании VamyR*")
 st.write("---")
 
@@ -85,12 +84,11 @@ else:
         st.write("📋 Список выбранных кораблей:")
         for c_idx, cart_item in enumerate(st.session_state.cart):
             st.markdown(f"• **{cart_item['name']}** — `{cart_item['price']}`")
-            total_price += cart_item['price_num']
+            total_price += cart_item['price_int']
             items_names.append(cart_item['name'])
             
         st.markdown(f"### 💰 Общая сумма: `{total_price:,} грн`".replace(",", " "))
         
-        # Форма заказа всей корзины сразу
         c_name = st.text_input("Ваше Имя:", key="cart_name_input")
         c_tg = st.text_input("Ваш Telegram для связи:", placeholder="@username", key="cart_tg_input")
         
@@ -100,13 +98,13 @@ else:
                 if c_name and c_tg:
                     orders.append({
                         "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "ship": ", ".join(items_names),  # Все корабли через запятую
+                        "ship": ", ".join(items_names),
                         "price": f"{total_price:,} грн".replace(",", " "),
                         "client_name": c_name,
                         "client_contact": c_tg
                     })
                     save_data(orders, DB_ORDERS)
-                    st.session_state.cart = []  # Очищаем корзину после успеха
+                    st.session_state.cart = []
                     st.balloons()
                     st.success("✨ Отлично! Общий заказ передан генеральному директору VamyR.")
                     time.sleep(1.5)
@@ -124,26 +122,27 @@ st.write("---")
 with st.expander("🛠️ Панель управления VamyR (Добавить объявление)"):
     st.subheader("🆕 Опубликовать новый корабль на витрину")
     new_name = st.text_input("Название корабля:", placeholder="Например: Линкор 'Виктория'")
-    new_price_raw = st.number_input("Цена в грн (только число):", min_value=1, value=1000)
+    new_price_text = st.text_input("Цена корабля (пиши просто число или с текстом):", placeholder="Например: 300 грн")
     new_desc = st.text_area("Описание модели:", placeholder="Материалы, размеры...")
     new_img = st.text_input("Ссылка на photo корабля (URL):")
     
     if st.button("🚀 ОПУБЛИКОВАТЬ ОБЪЯВЛЕНИЕ", use_container_width=True):
-        if new_name and new_desc:
+        if new_name and new_price_text and new_desc:
             img_to_save = new_img if new_img else "https://unsplash.com"
+            
+            # Добавляем объявление
             ships.append({
                 "name": new_name, 
-                "price": f"{new_price_raw:,} грн".replace(",", " "), 
+                "price": new_price_text, 
                 "desc": new_desc, 
-                "img": img_to_save,
-                "price_num": int(new_price_raw)
+                "img": img_to_save
             })
             save_data(ships, DB_SHIPS)
             st.success(f"🎉 Корабль '{new_name}' успешно выставлен на витрину!")
             time.sleep(1)
             st.rerun()
         else:
-            st.error("⚠️ Заполните Название и Описание!")
+            st.error("⚠️ Заполните все поля поля!")
             
     st.write("---")
     st.subheader("🗑️ Удаление объявлений")
@@ -171,18 +170,26 @@ for idx, ship in enumerate(ships):
         with col_price: st.markdown(f"#### `{ship['price']}`")
         st.write(ship["desc"])
         
-        # Кнопка добавления текущего корабля в общую корзину сессии
         if st.button(f"🛒 Добавить в корзину", key=f"add_cart_{idx}", use_container_width=True):
-            # Гарантируем наличие числового поля цены для старых записей
-            p_num = ship.get("price_num", 1000)
-            st.session_state.cart.append({"name": ship["name"], "price": ship["price"], "price_num": p_num})
+            # УМНОЕ ИЗВЛЕЧЕНИЕ ЦЕНЫ: вытаскиваем только цифры из любого текста цены
+            try:
+                only_digits = "".join([char for char in ship["price"] if char.isdigit()])
+                parsed_price = int(only_digits) if only_digits else 0
+            except:
+                parsed_price = 0
+                
+            st.session_state.cart.append({
+                "name": ship["name"], 
+                "price": ship["price"], 
+                "price_int": parsed_price
+            })
             st.toast(f"✅ {ship['name']} добавлен в корзину!")
             time.sleep(0.5)
             st.rerun()
 
 st.write("---")
 
-# ================= СЕКРЕТНЫЙ СПИСОК ЗАКАЗОВ ДЛЯ ДИРЕКТОРА =================
+# ================= СЕКРЕТНЫЙ СПИСОК ЗАКАЗОВ =================
 st.subheader("🔒 Вход для генерального директора VamyR")
 pass_input = st.text_input("Введите секретный пароль директора:", type="password")
 
@@ -211,4 +218,3 @@ if pass_input == ADMIN_PASSWORD:
             st.rerun()
 elif pass_input:
     st.error("❌ Неверный пароль директора!")
-
