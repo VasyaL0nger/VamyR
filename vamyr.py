@@ -7,7 +7,7 @@ st.set_page_config(page_title="VamyR — Мини-Корабли", layout="cente
 
 DB_SHIPS = "db_ships.json"
 DB_ORDERS = "db_orders.json"
-ADMIN_PASSWORD = "vamyradmin777"  # ТВОЙ СЕКРЕТНЫЙ ПАРОЛЬ ДЛЯ ПРОСМОТРА ЗАКАЗОВ (МОЖЕШЬ ИЗМЕНИТЬ)
+ADMIN_PASSWORD = "vamyradmin777"  # ТВОЙ ПАРОЛЬ ДЛЯ ПРОСМОТРА ЗАКАЗОВ
 
 # --- ФУНКЦИИ БАЗЫ ДАННЫХ ---
 def load_data(filename):
@@ -31,7 +31,7 @@ if not ships:
         {
             "name": "⚓ Галеон 'Чёрная Жемчужина'",
             "price": "3,500 грн",
-            "desc": "Детализированная мини-модель пиратского корабля. Сделан из дерева, паруса из плотной ткани.",
+            "desc": "Детализированная mini-модель пиратского корабля. Сделан из дерева, паруса из плотной ткани.",
             "img": "https://unsplash.com"
         }
     ]
@@ -81,12 +81,13 @@ st.subheader("🛒 Модели в наличии:")
 for idx, ship in enumerate(ships):
     with st.container(border=True):
         st.image(ship["img"], use_container_width=True)
-        col_title, col_price = st.columns()
+        
+        # ИСПРАВЛЕНО: Передаем число 2 в функцию колонок, чтобы не вылетала ошибка!
+        col_title, col_price = st.columns(2)
         with col_title: st.markdown(f"### {ship['name']}")
         with col_price: st.markdown(f"#### `{ship['price']}`")
         st.write(ship["desc"])
         
-        # Окно формы заказа для каждого корабля индивидуально под спойлером
         with st.expander(f"🛍️ Оформить заказ на {ship['name']}"):
             c_name = st.text_input("Ваше Имя:", key=f"name_{idx}")
             c_phone = st.text_input("Ваш Телефон / Telegram:", key=f"phone_{idx}")
@@ -102,13 +103,15 @@ for idx, ship in enumerate(ships):
                     })
                     save_data(orders, DB_ORDERS)
                     st.balloons()
-                    st.success("✨ Заявка принята! Компания VamyR свяжется с вами для подтверждения заказа.")
+                    st.success("✨ Заявка принята! Компания VamyR свяжется с вами.")
+                    time.sleep(1)
+                    st.rerun()
                 else:
-                    st.error("⚠️ Пожалуйста, введите имя и контактные данные, чтобы мы могли связаться!")
+                    st.error("⚠️ Введите имя и контакты!")
 
 st.write("---")
 
-# ================= СЕКРЕТНЫЙ СПИСОК ЗАКАЗОВ ДЛЯ ТЕБЯ =================
+# ================= СЕКРЕТНЫЙ СПИСОК ЗАКАЗОВ =================
 st.subheader("🔒 Вход для генерального директора VamyR")
 pass_input = st.text_input("Введите секретный пароль директора:", type="password")
 
