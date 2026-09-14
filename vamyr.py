@@ -3,7 +3,7 @@ import json
 import os
 import time
 
-st.set_page_config(page_title="VamyR —  Мини-Корабли", layout="centered", page_icon="🚢")
+st.set_page_config(page_title="VamyR — Мини-Корабли", layout="centered", page_icon="🚢")
 
 DB_SHIPS = "db_ships.json"
 DB_ORDERS = "db_orders.json"
@@ -25,11 +25,10 @@ def save_data(data, filename):
 ships = load_data(DB_SHIPS)
 orders = load_data(DB_ORDERS)
 
-# Инициализация корзины в памяти сессии
 if "cart" not in st.session_state:
     st.session_state.cart = []
 
-# Стартовый контент с полем статуса
+# Стартовый контент с количеством штук
 if not ships:
     ships = [
         {
@@ -37,43 +36,27 @@ if not ships:
             "price": "3500 грн",
             "desc": "Детализированная mini-модель пиратского корабля. Сделан из дерева, паруса из плотной ткани.",
             "img": "https://unsplash.com",
-            "status": "Выставлен..."
+            "status": "Выставлен...",
+            "stock": 3
         }
     ]
     save_data(ships, DB_SHIPS)
 
-# ================= СИСТЕМА КАСТОМНЫХ ТЕМ ОФОРМЛЕНИЯ VAMYR =================
+# --- СМЕНА СТИЛЕЙ САЙТА ---
 st.sidebar.subheader("🎨 Сменить стиль верфи")
 theme_choice = st.sidebar.radio("Выбери тему сайта:", ["🌌 По умолчанию", "🌊 Глубокое Море", "🏴‍☠️ Пиратская Гавань"], horizontal=False)
 
 if theme_choice == "🌊 Глубокое Море":
-    st.markdown("""
-        <style>
-        .stApp { background-color: #0b2545 !important; color: #eef4f8 !important; }
-        div[data-testid="stExpander"] { background-color: #134074 !important; border: 1px solid #8da9c4 !important; }
-        div[data-testid="stForm"] { background-color: #134074 !important; }
-        .stButton>button { background-color: #0077b6 !important; color: white !important; border-radius: 20px !important; border: 1px solid #90e0ef !important; }
-        h1, h2, h3, h4 { color: #90e0ef !important; }
-        </style>
-    """, unsafe_allow_html=True)
+    st.markdown("<style>.stApp { background-color: #0b2545 !important; color: #eef4f8 !important; } div[data-testid='stExpander'] { background-color: #134074 !important; border: 1px solid #8da9c4 !important; } div[data-testid='stForm'] { background-color: #134074 !important; } .stButton>button { background-color: #0077b6 !important; color: white !important; border-radius: 20px !important; border: 1px solid #90e0ef !important; } h1, h2, h3, h4 { color: #90e0ef !important; }</style>", unsafe_allow_html=True)
 elif theme_choice == "🏴‍☠️ Пиратская Гавань":
-    st.markdown("""
-        <style>
-        .stApp { background-color: #1c1917 !important; color: #f5f5f4 !important; font-family: 'Courier New', Courier, monospace !important; }
-        div[data-testid="stExpander"] { background-color: #292524 !important; border: 1px solid #ca8a04 !important; }
-        div[data-testid="stForm"] { background-color: #292524 !important; }
-        .stButton>button { background-color: #854d0e !important; color: #fef08a !important; border-radius: 4px !important; border: 2px solid #ca8a04 !important; font-weight: bold !important; }
-        h1, h2, h3, h4 { color: #eab308 !important; }
-        code { color: #fef08a !important; background-color: #44403c !important; }
-        </style>
-    """, unsafe_allow_html=True)
+    st.markdown("<style>.stApp { background-color: #1c1917 !important; color: #f5f5f4 !important; font-family: 'Courier New', Courier, monospace !important; } div[data-testid='stExpander'] { background-color: #292524 !important; border: 1px solid #ca8a04 !important; } div[data-testid='stForm'] { background-color: #292524 !important; } .stButton>button { background-color: #854d0e !important; color: #fef08a !important; border-radius: 4px !important; border: 2px solid #ca8a04 !important; font-weight: bold !important; } h1, h2, h3, h4 { color: #eab308 !important; } code { color: #fef08a !important; background-color: #44403c !important; }</style>", unsafe_allow_html=True)
 
-# --- ГЛАВНАЯ ШАПКА САЙТА VAMYR ---
+# --- ГЛАВНАЯ ШАПКА ---
 st.title("🚢 VamyR — Мастерская Мини-Кораблей")
 st.markdown("### *Эксклюзивные модели кораблей ручной работы от компании VamyR*")
 st.write("---")
 
-# --- ИНТЕРАКТИВНЫЙ БЛОК КОРЗИНЫ НАВЕРХУ СТРАНИЦЫ ---
+# ================= 🛡️ БЕЗОПАСНАЯ КОРЗИНА =================
 st.subheader("🛍️ Твоя Корзина")
 if not st.session_state.cart:
     st.info("Корзина пуста. Добавьте модели с витрины ниже! 🌊")
@@ -82,13 +65,20 @@ else:
     items_names = []
     
     with st.container(border=True):
-        st.write("📋 Список выбранных кораблей и предзаказов:")
+        st.write("📋 Выбранные товары и предзаказы:")
         for c_idx, cart_item in enumerate(st.session_state.cart):
             st.markdown(f"• **{cart_item['name']}** ({cart_item['status']}) — `{cart_item['price']}`")
             total_price += cart_item['price_int']
             items_names.append(f"{cart_item['name']} [{cart_item['status']}]")
             
-        st.markdown(f"### 💰 Общая сумма к оплате: `{total_price:,} грн`".replace(",", " "))
+        shipping_cost = 150
+        final_sum = total_price + shipping_cost
+        downpayment = int(total_price * 0.20)
+        
+        st.markdown(f"**Стоимость моделей:** {total_price:,} грн".replace(",", " "))
+        st.markdown(f"📦 **Защитная упаковка + Доставка:** {shipping_cost} грн")
+        st.markdown(f"### 💰 Итоговая сумма заказа: `{final_sum:,} грн`".replace(",", " "))
+        st.error(f"⚠️ **Внимание:** Требуется страховочная предоплата: **{downpayment:,} грн** (на закупку дерева и ткани). Остаток — при получении!".replace(",", " "))
         
         c_name = st.text_input("Ваше Имя:", key="cart_name_input")
         c_tg = st.text_input("Ваш Telegram для связи:", placeholder="@username", key="cart_tg_input")
@@ -97,28 +87,35 @@ else:
         with col_send:
             if st.button("✅ ОФОРМИТЬ ЗАКАЗ КОРЗИНЫ", use_container_width=True):
                 if c_name and c_tg:
+                    for cart_item in st.session_state.cart:
+                        orig_idx = cart_item["orig_idx"]
+                        if ships[orig_idx]["status"] == "Выставлен...":
+                            ships[orig_idx]["stock"] = max(0, ships[orig_idx].get("stock", 1) - 1)
+                            if ships[orig_idx]["stock"] == 0:
+                                ships[orig_idx]["status"] = "Продано"
+                    save_data(ships, DB_SHIPS)
+
                     orders.append({
                         "time": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "ship": ", ".join(items_names),
-                        "price": f"{total_price:,} грн".replace(",", " "),
+                        "price": f"{final_sum:,} грн".replace(",", " "),
+                        "downpayment": f"{downpayment:,} грн".replace(",", " "),
                         "client_name": c_name,
                         "client_contact": c_tg
                     })
                     save_data(orders, DB_ORDERS)
                     st.session_state.cart = []
                     st.balloons()
-                    st.success("✨ Отлично! Общий заказ передан генеральному директору VamyR.")
+                    st.success("✨ Заказ принят! Директор свяжется с вами в Telegram.")
                     time.sleep(1.5)
                     st.rerun()
-                else:
-                    st.error("⚠️ Введите имя и Telegram!")
+                else: st.error("⚠️ Введите имя и Telegram!")
         with col_clear:
             if st.button("🗑️ ОЧИСТИТЬ КОРЗИНУ", use_container_width=True):
                 st.session_state.cart = []
                 st.rerun()
 
 st.write("---")
-
 # --- СКРЫТАЯ АДМИН-ПАНЕЛЬ (УПРАВЛЕНИЕ ОБЪЯВЛЕНИЯМИ) ---
 with st.expander("🛠️ Панель управления VamyR (Добавить объявление)"):
     st.subheader("🆕 Опубликовать новый корабль на витрину")
@@ -126,8 +123,9 @@ with st.expander("🛠️ Панель управления VamyR (Добави�
     new_price_text = st.text_input("Цена корабля:", placeholder="Например: 300 грн")
     new_desc = st.text_area("Описание модели:", placeholder="Материалы, размеры...")
     new_img = st.text_input("Ссылка на photo корабля (URL):")
-    
     new_status = st.selectbox("Текущий статус модели:", ["Планируется...", "В разработке...", "Выставлен..."])
+    
+    new_stock = st.number_input("Количество штук в наличии (только для статуса 'Выставлен...'):", min_value=1, value=1)
     
     if st.button("🚀 ОПУБЛИКОВАТЬ ОБЪЯВЛЕНИЕ", use_container_width=True):
         if new_name and new_price_text and new_desc:
@@ -136,25 +134,24 @@ with st.expander("🛠️ Панель управления VamyR (Добави�
                 "name": new_name, 
                 "price": new_price_text, 
                 "desc": new_desc, 
-                "img": img_to_save,
-                "status": new_status
+                "img": img_to_save, 
+                "status": new_status,
+                "stock": int(new_stock)
             })
             save_data(ships, DB_SHIPS)
-            st.success(f"🎉 Корабль '{new_name}' со статусом '{new_status}' успешно выставлен на витрину!")
+            st.success("🎉 Корабль успешно выставлен на витрину!")
             time.sleep(1)
             st.rerun()
-        else:
-            st.error("⚠️ Заполните все обязательные поля!")
+        else: st.error("⚠️ Заполните все обязательные поля!")
             
     st.write("---")
     st.subheader("🗑️ Удаление объявлений")
     if ships:
         ship_to_delete = st.selectbox("Выбери корабль для удаления с витрины:", range(len(ships)), format_func=lambda x: ships[x]["name"])
         if st.button("❌ УДАЛИТЬ С ВИТРИНЫ", use_container_width=True):
-            deleted_name = ships[ship_to_delete]["name"]
             ships.pop(ship_to_delete)
             save_data(ships, DB_SHIPS)
-            st.success(f"🗑️ '{deleted_name}' удален.")
+            st.success("🗑️ Удалено с витрины.")
             time.sleep(1)
             st.rerun()
 
@@ -162,41 +159,54 @@ st.write("---")
 
 # --- ВИТРИНА ДЛЯ ПОКУПАТЕЛЕЙ ---
 st.subheader("🛒 Модели в наличии:")
-
 for idx, ship in enumerate(ships):
     with st.container(border=True):
         st.image(ship["img"], use_container_width=True)
         status = ship.get("status", "Выставлен...")
+        stock = ship.get("stock", 1)
         
         if status == "Планируется...":
             st.markdown("🔹 **Статус:** `⏳ Планируется к сборке`")
             btn_label = "📬 Оставить предзаказ"
+            disabled_btn = False
         elif status == "В разработке...":
             st.markdown("🔸 **Статус:** `🛠️ В процессе разработки`")
             btn_label = "📬 Оставить предзаказ"
+            disabled_btn = False
+        elif status == "Продано":
+            st.markdown("🔴 **Статус:** `❌ Все модели проданы (Нет в наличии)`")
+            btn_label = "🔒 Распродано"
+            disabled_btn = True
         else:
-            st.markdown("🔹 **Статус:** `✅ Выставлен на продажу (Готов к отправке)`")
+            st.markdown(f"🔹 **Статус:** `✅ В наличии: {stock} шт. (Спешите купить!)`")
             btn_label = "🛒 Добавить в корзину"
+            disabled_btn = False
             
         col_title, col_price = st.columns(2)
         with col_title: st.markdown(f"### {ship['name']}")
         with col_price: st.markdown(f"#### `{ship['price']}`")
         st.write(ship["desc"])
         
-        if st.button(btn_label, key=f"add_cart_{idx}", use_container_width=True):
+        if st.button(btn_label, key=f"add_cart_{idx}", use_container_width=True, disabled=disabled_btn):
             try:
                 only_digits = "".join([char for char in ship["price"] if char.isdigit()])
                 parsed_price = int(only_digits) if only_digits else 0
-            except:
-                parsed_price = 0
+            except: parsed_price = 0
+            
+            if status != "Выставлен..." and status != "Продано":
+                parsed_price += 150
+                display_price = f"{parsed_price} грн (Включая наценку за индивидуальный заказ)"
+            else:
+                display_price = ship["price"]
                 
             st.session_state.cart.append({
                 "name": ship["name"], 
-                "price": ship["price"], 
-                "price_int": parsed_price,
-                "status": status
+                "price": display_price, 
+                "price_int": parsed_price, 
+                "status": status,
+                "orig_idx": idx
             })
-            st.toast(f"✅ {ship['name']} добавлен в корзину!")
+            st.toast("✅ Добавлено в корзину!")
             time.sleep(0.5)
             st.rerun()
 
@@ -209,7 +219,6 @@ pass_input = st.text_input("Введите секретный пароль ди�
 if pass_input == ADMIN_PASSWORD:
     st.success("🔓 Доступ разрешен. База данных заказов загружена!")
     st.subheader("📋 Список активных заказов:")
-    
     if not orders:
         st.info("Пока нет новых заказов. Ждем клиентов! 🌊")
     else:
@@ -217,7 +226,8 @@ if pass_input == ADMIN_PASSWORD:
             st.markdown(f"""
             **Заказ №{o_idx+1}** ({ord['time']})
             *   🚢 **Выбранные товары:** {ord['ship']}
-            *   💰 **Общая стоимость:** `{ord['price']}`
+            *   💰 **Общая стоимость с доставкой:** `{ord['price']}`
+            *   🛡️ **Сумма требуемой предоплаты:** `{ord.get('downpayment', '0 грн')}`
             *   👤 **Клиент:** {ord['client_name']}
             *   ✈️ **Telegram для связи:** `{ord['client_contact']}`
             """)
@@ -229,5 +239,5 @@ if pass_input == ADMIN_PASSWORD:
             st.success("Список заказов успешно очищен!")
             time.sleep(1)
             st.rerun()
-elif pass_input:
-    st.error("❌ Неверный пароль директора!")
+elif pass_input: st.error("❌ Неверный пароль директора!")
+
