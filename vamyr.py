@@ -3,7 +3,7 @@ import json
 import os
 import time
 
-st.set_page_config(page_title="VamyR — Мини-Корабли", layout="centered", page_icon="🚢")
+st.set_page_config(page_title="VamyR —  Мини-Корабли", layout="centered", page_icon="🚢")
 
 DB_SHIPS = "db_ships.json"
 DB_ORDERS = "db_orders.json"
@@ -29,7 +29,7 @@ orders = load_data(DB_ORDERS)
 if "cart" not in st.session_state:
     st.session_state.cart = []
 
-# Стартовый контент с новым полем статуса
+# Стартовый контент с полем статуса
 if not ships:
     ships = [
         {
@@ -69,7 +69,7 @@ elif theme_choice == "🏴‍☠️ Пиратская Гавань":
     """, unsafe_allow_html=True)
 
 # --- ГЛАВНАЯ ШАПКА САЙТА VAMYR ---
-st.title("🚢 VamyR — Мастерская Mini-Кораблей")
+st.title("🚢 VamyR — Мастерская Мини-Кораблей")
 st.markdown("### *Эксклюзивные модели кораблей ручной работы от компании VamyR*")
 st.write("---")
 
@@ -127,13 +127,11 @@ with st.expander("🛠️ Панель управления VamyR (Добави�
     new_desc = st.text_area("Описание модели:", placeholder="Материалы, размеры...")
     new_img = st.text_input("Ссылка на photo корабля (URL):")
     
-    # ТРИ ТВОИХ СЛУЖЕБНЫХ СТАТУСА
     new_status = st.selectbox("Текущий статус модели:", ["Планируется...", "В разработке...", "Выставлен..."])
     
     if st.button("🚀 ОПУБЛИКОВАТЬ ОБЪЯВЛЕНИЕ", use_container_width=True):
         if new_name and new_price_text and new_desc:
             img_to_save = new_img if new_img else "https://unsplash.com"
-            
             ships.append({
                 "name": new_name, 
                 "price": new_price_text, 
@@ -168,11 +166,8 @@ st.subheader("🛒 Модели в наличии:")
 for idx, ship in enumerate(ships):
     with st.container(border=True):
         st.image(ship["img"], use_container_width=True)
-        
-        # Получаем статус (если у старых записей нет, ставим "Выставлен...")
         status = ship.get("status", "Выставлен...")
         
-        # Красивое цветовое отображение твоих статусов
         if status == "Планируется...":
             st.markdown("🔹 **Статус:** `⏳ Планируется к сборке`")
             btn_label = "📬 Оставить предзаказ"
@@ -188,7 +183,6 @@ for idx, ship in enumerate(ships):
         with col_price: st.markdown(f"#### `{ship['price']}`")
         st.write(ship["desc"])
         
-        # Динамическая кнопка в зависимости от статуса
         if st.button(btn_label, key=f"add_cart_{idx}", use_container_width=True):
             try:
                 only_digits = "".join([char for char in ship["price"] if char.isdigit()])
@@ -202,13 +196,13 @@ for idx, ship in enumerate(ships):
                 "price_int": parsed_price,
                 "status": status
             })
-            st.toast(f"✅ {ship['name']} добавлен в корзину как {status}!")
+            st.toast(f"✅ {ship['name']} добавлен в корзину!")
             time.sleep(0.5)
             st.rerun()
 
 st.write("---")
 
-# ================= СЕКРЕТНЫЙ СПИСОК ЗАКАЗОВ =================
+# ================= СЕКРЕТНЫЙ СПИСОК ЗАКАЗОВ ДЛЯ ДИРЕКТОРА =================
 st.subheader("🔒 Вход для генерального директора VamyR")
 pass_input = st.text_input("Введите секретный пароль директора:", type="password")
 
@@ -235,5 +229,5 @@ if pass_input == ADMIN_PASSWORD:
             st.success("Список заказов успешно очищен!")
             time.sleep(1)
             st.rerun()
-            elif pass_input:
-            st.error("❌ Неверный пароль директора!")
+elif pass_input:
+    st.error("❌ Неверный пароль директора!")
