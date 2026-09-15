@@ -17,11 +17,11 @@ def save_data(d, f):
 ships, orders = load_data(DB_SHIPS), load_data(DB_ORDERS)
 if "cart" not in st.session_state: st.session_state.cart = []
 
-if not ships:
-    ships = [{"name": "⚓ Галеон 'Чёрная Жемчужина'", "price": "3500 грн", "desc": "Детализированная модель пиратского корабля ручной работы. Сделан из дерева, паруса из плотной ткани.", "img": "https://pixabay.com", "status": "Выставлен...", "stock": 3}]
-    save_data(ships, DB_SHIPS)
+# --- ИСПРАВЛЕНО: ТЕСТОВЫЙ КОРАБЛЬ ПО УМОЛЧАНИЮ УБРАН, БАЗА ИЗНАЧАЛЬНО ЧИСТАЯ ---
+if not os.path.exists(DB_SHIPS):
+    save_data([], DB_SHIPS)
 
-# Премиум-стили
+# Элитные кастомные стили VamyR Premium
 st.markdown("""<style>
     .stApp { background-color: #08080c !important; color: #f3f4f6 !important; font-family: sans-serif !important; }
     .main-title { font-size: 42px !important; font-weight: 800 !important; background: linear-gradient(135deg, #fef08a 0%, #ca8a04 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
@@ -35,21 +35,17 @@ st.markdown("""<style>
     input, textarea { background-color: #181825 !important; color: white !important; border: 1px solid #3f3f46 !important; border-radius: 8px !important; }
 </style>""", unsafe_allow_html=True)
 
-# Логотип и меню
+# Боковое меню (Блок ТЕМ полностью удалён)
 st.sidebar.markdown("### 🏢 Бренд VamyR")
 if os.path.exists("logo.png"): st.sidebar.image("logo.png", use_container_width=True)
 else: st.sidebar.markdown("<h2 style='color:#eab308; text-align:center;'>🚢 VamyR</h2>", unsafe_allow_html=True)
 
-theme_choice = st.sidebar.radio("Выбери тему сайта:", ["🌌 По умолчанию", "🌊 Глубокое Море", "🏴‍☠️ Пиратская Гавань"])
-if theme_choice == "🌊 Глубокое Море": st.markdown("<style>.stApp { background-color: #0b2545 !important; color: #eef4f8 !important; } h1, h2, h3, h4 { color: #90e0ef !important; }</style>", unsafe_allow_html=True)
-elif theme_choice == "🏴‍☠️ Пиратская Гавань": st.markdown("<style>.stApp { background-color: #1c1917 !important; color: #f5f5f4 !important; } h1, h2, h3, h4 { color: #eab308 !important; }</style>", unsafe_allow_html=True)
-
 st.markdown('<div class="main-title">🚢 VamyR Premium</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Эксклюзивные модели кораблей ручной работы от конструкторского бюро VamyR</div>', unsafe_allow_html=True)
 
-# Корзина
+# Умная Корзина с проверкой лимита штук
 st.subheader("🛍️ Твоя Корзина заказа")
-if not st.session_state.cart: st.info("Ваша корзина пуста. Добавьте шедевры верфи с витрины ниже!")
+if not st.session_state.cart: st.info("Ваша корзина пуста. Добавьте модели с витрины ниже!")
 else:
     total_price, items_names = 0, []
     with st.container(border=True):
@@ -69,7 +65,7 @@ else:
                 if c_name and c_tg:
                     for cart_item in st.session_state.cart:
                         orig_idx = cart_item["orig_idx"]
-                        if ships[orig_idx]["status"] == "Выставлен...":
+                        if orig_idx < len(ships) and ships[orig_idx]["status"] == "Выставлен...":
                             ships[orig_idx]["stock"] = max(0, ships[orig_idx].get("stock", 1) - 1)
                             if ships[orig_idx]["stock"] == 0: ships[orig_idx]["status"] = "Продано"
                     save_data(ships, DB_SHIPS)
@@ -116,28 +112,49 @@ elif pass_input: st.error("❌ Неверный пароль!")
 
 st.write("---")
 st.markdown('## 🛒 Эксклюзивная витрина моделей')
-for idx, ship in enumerate(ships):
-    with st.container(border=False):
-        st.image(ship["img"], use_container_width=True)
-        status, stock = ship.get("status", "Выставлен..."), ship.get("stock", 1)
-        if status == "Планируется...": st.markdown("<span style='color:#a1a1aa; font-weight:700;'>⏳ СТАТУС: Планируется к сборке</span>", unsafe_allow_html=True); btn_label, disabled_btn = "📬 Оставить предзаказ", False
-        elif status == "В разработке...": st.markdown("<span style='color:#f59e0b; font-weight:700;'>🛠️ СТАТУС: На стапелях в разработке</span>", unsafe_allow_html=True); btn_label, disabled_btn = "📬 Оставить предзаказ", False
-        elif status == "Продано": st.markdown("<span style='color:#ef4444; font-weight:700;'>❌ СТАТУС: ЭКЗЕМПЛЯР ПРОДАН</span>", unsafe_allow_html=True); btn_label, disabled_btn = "🔒 Распродано", True
-        else: st.markdown(f"<span style='color:#22c55e; font-weight:700;'>✅ СТАТУС: В наличии на верфи — {stock} шт.</span>", unsafe_allow_html=True); btn_label, disabled_btn = "🛒 Добавить в корзину", False
-        col_title, col_price = st.columns(2)
-        with col_title: st.markdown(f"### {ship['name']}")
-        with col_price: st.markdown(f"<h4 style='text-align:right;color:#eab308;margin:0;'>{ship['price']}</h4>", unsafe_allow_html=True)
-        st.markdown(f"<p style='color:#d1d5db;'>{ship['desc']}</p>", unsafe_allow_html=True)
-        if st.button(btn_label, key=f"add_cart_{idx}", use_container_width=True, disabled=disabled_btn):
-            try:
-                only_digits = "".join([c for c in ship["price"] if c.isdigit()])
-                parsed_price = int(only_digits) if only_digits else 0
-            except:
-                parsed_price = 0
-            display_price = f"{parsed_price+150} грн (Включая наценку)" if status != "Выставлен..." and status != "Продано" else ship["price"]
-            st.session_state.cart.append({"name": ship["name"], "price": display_price, "price_int": parsed_price, "status": status, "orig_idx": idx})
-            st.toast(f"✅ Добавлено!")
-            time.sleep(0.5)
-            st.rerun()
+
+if not ships:
+    st.info("⚓ Витрина пуста. Зайдите в кабинет директора, чтобы выставить первый корабль!")
+else:
+    for idx, ship in enumerate(ships):
+        with st.container(border=False):
+            st.image(ship["img"], use_container_width=True)
+            status, stock = ship.get("status", "Выставлен..."), ship.get("stock", 1)
+            
+            # Считаем, сколько штук ЭТОГО корабля клиент УЖЕ положил в корзину
+            already_in_cart = sum(1 for item in st.session_state.cart if item.get("orig_idx") == idx)
+            
+            if status == "Планируется...": 
+                st.markdown("<span style='color:#a1a1aa; font-weight:700;'>⏳ СТАТУС: Планируется к сборке</span>", unsafe_allow_html=True)
+                btn_label, disabled_btn = "📬 Оставить предзаказ", False
+            elif status == "В разработке...": 
+                st.markdown("<span style='color:#f59e0b; font-weight:700;'>🛠️ СТАТУС: На стапелях в разработке</span>", unsafe_allow_html=True)
+                btn_label, disabled_btn = "📬 Оставить предзаказ", False
+            elif status == "Продано" or stock <= 0: 
+                st.markdown("<span style='color:#ef4444; font-weight:700;'>❌ СТАТУС: ЭКЗЕМПЛЯР ПРОДАН</span>", unsafe_allow_html=True)
+                btn_label, disabled_btn = "🔒 Распродано", True
+            elif already_in_cart >= stock:
+                # ЖЕСТКИЙ ЛИМИТ: если в корзине столько же, сколько на складе — блокируем кнопку
+                st.markdown(f"<span style='color:#eab308; font-weight:700;'>⚠️ СТАТУС: В наличии {stock} шт. (Весь доступный остаток уже в твоей корзине!)</span>", unsafe_allow_html=True)
+                btn_label, disabled_btn = "🚫 Достигнут лимит склада", True
+            else: 
+                st.markdown(f"<span style='color:#22c55e; font-weight:700;'>✅ СТАТУС: В наличии на верфи — {stock - already_in_cart} шт.</span>", unsafe_allow_html=True)
+                btn_label, disabled_btn = "🛒 Добавить в корзину", False
+                
+            col_title, col_price = st.columns(2)
+            with col_title: st.markdown(f"### {ship['name']}")
+            with col_price: st.markdown(f"<h4 style='text-align:right;color:#eab308;margin:0;'>{ship['price']}</h4>", unsafe_allow_html=True)
+            st.markdown(f"<p style='color:#d1d5db;'>{ship['desc']}</p>", unsafe_allow_html=True)
+            
+            if st.button(btn_label, key=f"add_cart_{idx}", use_container_width=True, disabled=disabled_btn):
+                try: 
+                    only_digits = "".join([c for char in ship["price"] if c.isdigit()])
+                    parsed_price = int(only_digits) if only_digits else 0
+                except: parsed_price = 0
+                display_price = f"{parsed_price+150} грн (Включая наценку)" if status != "Выставлен..." and status != "Продано" else ship["price"]
+                st.session_state.cart.append({"name": ship["name"], "price": display_price, "price_int": parsed_price, "status": status, "orig_idx": idx})
+                st.toast(f"✅ Добавлено!")
+                time.sleep(0.5)
+                st.rerun()
 st.write("---")
 st.markdown('<div class="sub-title" style="font-size:12px !important; text-align:center;">© 2026 VamyR Premium Inc. Конструкторское бюро Longer.</div>', unsafe_allow_html=True)
