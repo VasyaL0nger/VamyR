@@ -145,12 +145,11 @@ else:
                     time.sleep(1.5)
                     st.rerun()
        else: st.error("⚠️ Заполните Имя и Telegram!")
+st.write("---")
+# ================= КАБИНЕТ ДИРЕКТОРА VAMYR (ЗАПАРОЛЕНО) =================
 st.markdown('### 🔒 Закрытый док генерального директора')
-pass_input = st.text_input("Введите секретный пароль для доступа к заказам и верфи:", type="password", key="main_admin_pass")
-
 if pass_input == ADMIN_PASSWORD:
     st.success("🔓 Капитан Longer, добро пожаловать в управление верфью VamyR!")
-    
     # --- Управление витриной моделей ---
     with st.expander("📦 Панель управления витриной (Добавить/Удалить корабль)"):
         st.subheader("🆕 Опубликовать новое судно")
