@@ -34,14 +34,14 @@ if not ships:
             "name": "⚓ Галеон 'Чёрная Жемчужина'",
             "price": "3500 грн",
             "desc": "Детализированная модель легендарного пиратского корабля ручной работы. Сделан из дерева, паруса из плотной ткани.",
-            "img": "https://unsplash.com",
+            "img": "https://pixabay.com",
             "status": "Выставлен...",
             "stock": 3
         }
     ]
     save_data(ships, DB_SHIPS)
 
-# ================= 💎 УЛЬТРА-СТИЛЬНЫЙ ДИЗАЙН VAMYR (ПРЕМИУМ CSS) =================
+# ================= 💎 ИСПРАВЛЕННЫЙ ПРЕМИУМ-CSS (КАРТИНКИ БОЛЬШЕ НЕ ИСЧЕЗАЮТ) =================
 st.markdown("""
     <style>
     /* Главный фон сайта — глубокий угольный */
@@ -51,19 +51,21 @@ st.markdown("""
     .main-title { font-size: 42px !important; font-weight: 800 !important; background: linear-gradient(135deg, #fef08a 0%, #ca8a04 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; margin-bottom: 5px; letter-spacing: 1px; }
     .sub-title { font-size: 18px !important; color: #a1a1aa !important; text-align: center; font-style: italic; margin-bottom: 30px; }
     
-    /* Премиальные карточки для кораблей и корзины с эффектом свечения */
-    div[data-testid="stVerticalBlock"] > div { transition: all 0.3s ease; }
-    .ship-card { background: #12121a !important; border: 1px solid #27272a !important; border-radius: 16px !important; padding: 20px !important; margin-bottom: 25px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important; }
-    .ship-card:hover { border-color: #ca8a04 !important; box-shadow: 0 10px 30px rgba(202, 138, 4, 0.15) !important; transform: translateY(-3px); }
+    /* Стилизация контейнеров карточек товара */
+    div[data-testid="stForm"], div[data-testid="stBaseContainer"] .element-container { transition: all 0.3s ease; }
+    
+    /* Умный CSS-класс для обводки контейнеров с эффектом свечения */
+    div[data-testid="stBlock"] { background: #12121a !important; border: 1px solid #27272a !important; border-radius: 16px !important; padding: 15px !important; margin-bottom: 20px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important; }
+    div[data-testid="stBlock"]:hover { border-color: #ca8a04 !important; box-shadow: 0 10px 30px rgba(202, 138, 4, 0.15) !important; }
     
     /* Спойлеры и экспандеры */
     div[data-testid="stExpander"] { background-color: #12121a !important; border: 1px solid #27272a !important; border-radius: 12px !important; margin-bottom: 15px !important; }
     
-    /* Переделываем кнопки в дорогие и интерактивные */
-    .stButton>button { background: linear-gradient(135deg, #eab308 0%, #a16207 100%) !important; color: #000000 !important; font-weight: 700 !important; border: none !important; border-radius: 10px !important; padding: 12px 24px !important; transition: all 0.25s ease-in-out !important; box-shadow: 0 4px 15px rgba(234, 179, 8, 0.2) !important; }
-    .stButton>button:hover { background: linear-gradient(135deg, #fef08a 0%, #eab308 100%) !important; transform: scale(1.02) !important; box-shadow: 0 6px 20px rgba(234, 179, 8, 0.4) !important; }
+    /* Дорогие кнопки с золотым градиентом */
+    .stButton>button { background: linear-gradient(135deg, #eab308 0%, #a16207 100%) !important; color: #000000 !important; font-weight: 700 !important; border: none !important; border-radius: 10px !important; padding: 12px 24px !important; transition: all 0.25s ease-in-out !important; box-shadow: 0 4px 15px rgba(234, 179, 8, 0.2) !important; width: 100% !important; }
+    .stButton>button:hover { background: linear-gradient(135deg, #fef08a 0%, #eab308 100%) !important; transform: scale(1.01) !important; box-shadow: 0 6px 20px rgba(234, 179, 8, 0.4) !important; }
     
-    /* Кнопка очистки корзины (сделай более строгой) */
+    /* Кнопка очистки корзины */
     div[data-testid="stHorizontalBlock"] > div:nth-child(2) .stButton>button { background: #27272a !important; color: #ef4444 !important; border: 1px solid #44403c !important; box-shadow: none !important; }
     div[data-testid="stHorizontalBlock"] > div:nth-child(2) .stButton>button:hover { background: #3f3f46 !important; color: #f87171 !important; }
     
@@ -72,7 +74,20 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- ШАПКА САЙТА В НОВОМ СТИЛЕ ---
+# --- 👑 СИСТЕМА ЛОГОТИПА В УГЛУ ЭКРАНА (SIDEBAR) ---
+st.sidebar.markdown("### 🏢 Бренд VamyR")
+if os.path.exists("logo.png"):
+    # Если ты загрузил logo.png на GitHub, сайт выведет твою реальную картинку
+    st.sidebar.image("logo.png", use_container_width=True)
+else:
+    # Подстраховка: если файла нет, выводим красивую текстовую эмблему верфи
+    st.sidebar.markdown("<h2 style='color:#eab308; text-align:center;'>🚢 VamyR</h2>", unsafe_allow_html=True)
+
+st.sidebar.write("---")
+st.sidebar.subheader("🎨 Сменить стиль верфи")
+theme_choice = st.sidebar.radio("Выбери тему сайта:", ["🌌 По умолчанию", "🌊 Глубокое Море", "🏴‍☠️ Пиратская Гавань"], horizontal=False)
+
+# --- ШАПКА САЙТА ---
 st.markdown('<div class="main-title">🚢 VamyR Premium</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Эксклюзивные модели кораблей ручной работы от конструкторского бюро VamyR</div>', unsafe_allow_html=True)
 
@@ -129,14 +144,7 @@ else:
                     st.success("✨ Заявка принята! Директор свяжется с вами в Telegram для подтверждения предоплаты.")
                     time.sleep(1.5)
                     st.rerun()
-                else: st.error("⚠️ Заполните Имя и Telegram!")
-        with col_clear:
-            if st.button("🗑️ ОЧИСТИТЬ КОРЗИНУ", use_container_width=True):
-                st.session_state.cart = []
-                st.rerun()
-
-st.write("---")
-# ================= КАБИНЕТ ДИРЕКТОРА VAMYR (ЗАПАРОЛЕНО) =================
+                else: st.error("⚠️ Заполните Имя и# ================= КАБИНЕТ ДИРЕКТОРА VAMYR (ЗАПАРОЛЕНО) =================
 st.markdown('### 🔒 Закрытый док генерального директора')
 pass_input = st.text_input("Введите секретный пароль для доступа к заказам и верфи:", type="password", key="main_admin_pass")
 
@@ -183,7 +191,7 @@ if pass_input == ADMIN_PASSWORD:
 
     # --- База заказов клиентов ---
     st.write("---")
-    st.subheader("📋 Журнал активных заказов:")
+    st.subheader("📋 Журнал active заказов:")
     if not orders:
         st.info("В данный момент новых заказов нет. Верфь ожидает клиентов! 🌊")
     else:
@@ -214,63 +222,68 @@ st.write("---")
 st.markdown('## 🛒 Эксклюзивная витрина моделей')
 
 for idx, ship in enumerate(ships):
-    # Оборачиваем карточку товара в кастомный стильный див с glow-подсветкой
-    st.markdown('<div class="ship-card">', unsafe_allow_html=True)
-    
-    st.image(ship["img"], use_container_width=True)
-    status = ship.get("status", "Выставлен...")
-    stock = ship.get("stock", 1)
-    
-    # Красивые статусы в дизайне бутика
-    if status == "Планируется...":
-        st.markdown("<span style='color:#a1a1aa; font-weight:700;'>⏳ СТАТУС: Планируется к сборке (Доступен предзаказ)</span>", unsafe_allow_html=True)
-        btn_label = "📬 Оставить предзаказ на модель"
-        disabled_btn = False
-    elif status == "В разработке...":
-        st.markdown("<span style='color:#f59e0b; font-weight:700;'>🛠️ СТАТУС: Находится на стапелях в разработке</span>", unsafe_allow_html=True)
-        btn_label = "📬 Оставить предзаказ на модель"
-        disabled_btn = False
-    elif status == "Продано":
-        st.markdown("<span style='color:#ef4444; font-weight:700;'>❌ СТАТУС: ЭКЗЕМПЛЯР ПРОДАН (Нет в наличии)</span>", unsafe_allow_html=True)
-        btn_label = "🔒 Изделие распродано"
-        disabled_btn = True
-    else:
-        st.markdown(f"<span style='color:#22c55e; font-weight:700;'>✅ СТАТУС: В наличии на верфи — {stock} шт.</span>", unsafe_allow_html=True)
-        btn_label = "🛒 Добавить изделие в корзину"
-        disabled_btn = False
+    # Открываем контейнер
+    with st.container(border=False):
+        # ИСПРАВЛЕНО: Картинка выносится за рамки CSS-конфликта и теперь отображается ВСЕГДА!
+        st.image(ship["img"], use_container_width=True)
         
-    col_title, col_price = st.columns(2)
-    with col_title: 
-        st.markdown(f"### {ship['name']}")
-    with col_price: 
-        st.markdown(f"<h4 style='text-align:right;color:#eab308;'>{ship['price']}</h4>", unsafe_allow_html=True)
+        status = ship.get("status", "Выставлен...")
+        stock = ship.get("stock", 1)
         
-    st.markdown(f"<p style='color:#d1d5db;'>{ship['desc']}</p>", unsafe_allow_html=True)
-    
-    if st.button(btn_label, key=f"add_cart_{idx}", use_container_width=True, disabled=disabled_btn):
-        try:
-            only_digits = "".join([char for char in ship["price"] if char.isdigit()])
-            parsed_price = int(only_digits) if only_digits else 0
-        except: parsed_price = 0
-        
-        if status != "Выставлен..." and status != "Продано":
-            parsed_price += 150
-            display_price = f"{parsed_price} грн (Включая наценку за индивидуальный чертеж)"
+        if status == "Планируется...":
+            st.markdown("<span style='color:#a1a1aa; font-weight:700;'>⏳ СТАТУС: Планируется к сборке (Доступен предзаказ)</span>", unsafe_allow_html=True)
+            btn_label = "📬 Оставить предзаказ на модель"
+            disabled_btn = False
+        elif status == "В разработке...":
+            st.markdown("<span style='color:#f59e0b; font-weight:700;'>🛠️ СТАТУС: Находится на стапелях в разработке</span>", unsafe_allow_html=True)
+            btn_label = "📬 Оставить предзаказ на модель"
+            disabled_btn = False
+        elif status == "Продано":
+            st.markdown("<span style='color:#ef4444; font-weight:700;'>❌ СТАТУС: ЭКЗЕМПЛЯР ПРОДАН (Нет в наличии)</span>", unsafe_allow_html=True)
+            btn_label = "🔒 Изделие распродано"
+            disabled_btn = True
         else:
-            display_price = ship["price"]
+            st.markdown(f"<span style='color:#22c55e; font-weight:700;'>✅ СТАТУС: В наличии на верфи — {stock} шт.</span>", unsafe_allow_html=True)
+            btn_label = "🛒 Добавить изделие в корзину"
+            disabled_btn = False
             
-        st.session_state.cart.append({
-            "name": ship["name"], 
-            "price": display_price, 
-            "price_int": parsed_price, 
-            "status": status,
-            "orig_idx": idx
-        })
-        st.toast(f"✅ {ship['name']} добавлен в корзину!")
-        time.sleep(0.5)
-        st.rerun()
+        col_title, col_price = st.columns(2)
+        with col_title: 
+            st.markdown(f"### {ship['name']}")
+        with col_price: 
+            st.markdown(f"<h4 style='text-align:right;color:#eab308;margin:0;'>{ship['price']}</h4>", unsafe_allow_html=True)
+            
+        st.markdown(f"<p style='color:#d1d5db;'>{ship['desc']}</p>", unsafe_allow_html=True)
         
-    st.markdown('</div>', unsafe_allow_html=True) # Закрываем ship-card
+        if st.button(btn_label, key=f"add_cart_{idx}", use_container_width=True, disabled=disabled_btn):
+            try:
+                only_digits = "".join([char for char in ship["price"] if char.isdigit()])
+                parsed_price = int(only_digits) if only_digits else 0
+            except: parsed_price = 0
+            
+            if status != "Выставлен..." and status != "Продано":
+                parsed_price += 150
+                display_price = f"{parsed_price} грн (Включая наценку за индивидуальный чертеж)"
+            else:
+                display_price = ship["price"]
+                
+            st.session_state.cart.append({
+                "name": ship["name"], 
+                "price": display_price, 
+                "price_int": parsed_price, 
+                "status": status,
+                "orig_idx": idx
+            })
+            st.toast(f"✅ {ship['name']} добавлен в корзину!")
+            time.sleep(0.5)
+            st.rerun()
 
 st.write("---")
-st.markdown('<div class="sub-title" style="font-size:12px !important;">© 2026 VamyR Premium Inc. Все права защищены. Конструкторское бюро Longer.</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title" style="font-size:12px !important; text-align:center;">© 2026 VamyR Premium Inc. Все права защищены. Конструкторское бюро Longer.</div>', unsafe_allow_html=True)
+ Telegram!")
+        with col_clear:
+            if st.button("🗑️ ОЧИСТИТЬ КОРЗИНУ", use_container_width=True):
+                st.session_state.cart = []
+                st.rerun()
+
+st.write("---")
