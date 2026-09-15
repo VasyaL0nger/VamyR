@@ -14,14 +14,18 @@ def load_data(f):
 def save_data(d, f):
     with open(f, "w", encoding="utf-8") as file: json.dump(d, file, ensure_ascii=False, indent=2)
 
+# ЖЕСТКАЯ ОЧИСТКА: Если файл базы старый, сносим его принудительно, чтобы убрать тест-корабль
+if not st.sidebar.get("db_cleaned", False):
+    if os.path.exists(DB_SHIPS):
+        try:
+            os.remove(DB_SHIPS)
+        except: pass
+    st.sidebar("db_cleaned", value=True)
+
 ships, orders = load_data(DB_SHIPS), load_data(DB_ORDERS)
 if "cart" not in st.session_state: st.session_state.cart = []
 
-# --- ИСПРАВЛЕНО: ТЕСТОВЫЙ КОРАБЛЬ ПО УМОЛЧАНИЮ УБРАН, БАЗА ИЗНАЧАЛЬНО ЧИСТАЯ ---
-if not os.path.exists(DB_SHIPS):
-    save_data([], DB_SHIPS)
-
-# Элитные кастомные стили VamyR Premium
+# Премиум-стили VamyR
 st.markdown("""<style>
     .stApp { background-color: #08080c !important; color: #f3f4f6 !important; font-family: sans-serif !important; }
     .main-title { font-size: 42px !important; font-weight: 800 !important; background: linear-gradient(135deg, #fef08a 0%, #ca8a04 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
@@ -35,7 +39,7 @@ st.markdown("""<style>
     input, textarea { background-color: #181825 !important; color: white !important; border: 1px solid #3f3f46 !important; border-radius: 8px !important; }
 </style>""", unsafe_allow_html=True)
 
-# Боковое меню (Блок ТЕМ полностью удалён)
+# Боковое меню с логотипом
 st.sidebar.markdown("### 🏢 Бренд VamyR")
 if os.path.exists("logo.png"): st.sidebar.image("logo.png", use_container_width=True)
 else: st.sidebar.markdown("<h2 style='color:#eab308; text-align:center;'>🚢 VamyR</h2>", unsafe_allow_html=True)
@@ -43,7 +47,7 @@ else: st.sidebar.markdown("<h2 style='color:#eab308; text-align:center;'>🚢 Va
 st.markdown('<div class="main-title">🚢 VamyR Premium</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Эксклюзивные модели кораблей ручной работы от конструкторского бюро VamyR</div>', unsafe_allow_html=True)
 
-# Умная Корзина с проверкой лимита штук
+# Корзина заказа
 st.subheader("🛍️ Твоя Корзина заказа")
 if not st.session_state.cart: st.info("Ваша корзина пуста. Добавьте модели с витрины ниже!")
 else:
@@ -88,7 +92,7 @@ if pass_input == ADMIN_PASSWORD:
     st.success("🔓 Капитан Longer, добро пожаловать!")
     with st.expander("📦 Панель управления витриной"):
         new_name = st.text_input("Название корабля:")
-        new_price_text = st.text_input("Цена корабля (текстом):")
+        new_price_text = st.text_input("Цена корабля (пиши просто число, например 300):")
         new_desc = st.text_area("Описание модели:")
         new_img = st.text_input("Ссылка на фото (URL):")
         new_status = st.selectbox("Статус:", ["Планируется...", "В разработке...", "Выставлен..."])
@@ -96,7 +100,7 @@ if pass_input == ADMIN_PASSWORD:
         if st.button("🚀 ВЫПУСТИТЬ КОРАБЛЬ НА ВИТРИНУ"):
             if new_name and new_price_text and new_desc:
                 img_to_save = new_img if new_img else "https://unsplash.com"
-                ships.append({"name": new_name, "price": new_price_text, "desc": new_desc, "img": img_to_save, "status": new_status, "stock": int(new_stock)})
+                ships.append({"name": new_name, "price": f"{new_price_text} грн", "desc": new_desc, "img": img_to_save, "status": new_status, "stock": int(new_stock)})
                 save_data(ships, DB_SHIPS); st.success("🎉 Успешно добавлено!"); time.sleep(1); st.rerun()
             else: st.error("⚠️ Заполните поля!")
         if ships:
@@ -114,14 +118,12 @@ st.write("---")
 st.markdown('## 🛒 Эксклюзивная витрина моделей')
 
 if not ships:
-    st.info("⚓ Витрина пуста. Зайдите в кабинет директора, чтобы выставить первый корабль!")
+    st.info("⚓ Витрина пуста. Введите пароль директора выше и выставьте свой первый корабль по новой системе!")
 else:
     for idx, ship in enumerate(ships):
         with st.container(border=False):
             st.image(ship["img"], use_container_width=True)
             status, stock = ship.get("status", "Выставлен..."), ship.get("stock", 1)
-            
-            # Считаем, сколько штук ЭТОГО корабля клиент УЖЕ положил в корзину
             already_in_cart = sum(1 for item in st.session_state.cart if item.get("orig_idx") == idx)
             
             if status == "Планируется...": 
@@ -134,7 +136,6 @@ else:
                 st.markdown("<span style='color:#ef4444; font-weight:700;'>❌ СТАТУС: ЭКЗЕМПЛЯР ПРОДАН</span>", unsafe_allow_html=True)
                 btn_label, disabled_btn = "🔒 Распродано", True
             elif already_in_cart >= stock:
-                # ЖЕСТКИЙ ЛИМИТ: если в корзине столько же, сколько на складе — блокируем кнопку
                 st.markdown(f"<span style='color:#eab308; font-weight:700;'>⚠️ СТАТУС: В наличии {stock} шт. (Весь доступный остаток уже в твоей корзине!)</span>", unsafe_allow_html=True)
                 btn_label, disabled_btn = "🚫 Достигнут лимит склада", True
             else: 
@@ -143,18 +144,20 @@ else:
                 
             col_title, col_price = st.columns(2)
             with col_title: st.markdown(f"### {ship['name']}")
-            with col_price: st.markdown(f"<h4 style='text-align:right;color:#eab308;margin:0;'>{ship['price']}</h4>", unsafe_allow_html=True)
-            st.markdown(f"<p style='color:#d1d5db;'>{ship['desc']}</p>", unsafe_allow_html=True)
+            with col_price: 
+                st.markdown(f"{ship['price']}", unsafe_allow_html=True)
+            st.markdown(f"{ship['desc']}", unsafe_allow_html=True)
             
             if st.button(btn_label, key=f"add_cart_{idx}", use_container_width=True, disabled=disabled_btn):
-                try: 
-                    only_digits = "".join([c for char in ship["price"] if c.isdigit()])
+                try:
+                    only_digits = "".join([c for c in ship["price"] if c.isdigit()])
                     parsed_price = int(only_digits) if only_digits else 0
-                except: parsed_price = 0
+                except: 
+                    parsed_price = 0
                 display_price = f"{parsed_price+150} грн (Включая наценку)" if status != "Выставлен..." and status != "Продано" else ship["price"]
                 st.session_state.cart.append({"name": ship["name"], "price": display_price, "price_int": parsed_price, "status": status, "orig_idx": idx})
                 st.toast(f"✅ Добавлено!")
                 time.sleep(0.5)
                 st.rerun()
 st.write("---")
-st.markdown('<div class="sub-title" style="font-size:12px !important; text-align:center;">© 2026 VamyR Premium Inc. Конструкторское бюро Longer.</div>', unsafe_allow_html=True)
+st.markdown('© 2026 VamyR Premium Inc. Конструкторское бюро Longer.', unsafe_allow_html=True)
