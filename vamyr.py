@@ -120,7 +120,7 @@ else:
         
         col_send, col_clear = st.columns(2)
         with col_send:
-            if st.button("✅ ОФОРМИТЬ ОБЩИЙ ЗАКАЗ", use_container_width=True):
+if st.button("✅ ОФОРМИТЬ ОБЩИЙ ЗАКАЗ", use_container_width=True):
                 if c_name and c_tg:
                     for cart_item in st.session_state.cart:
                         orig_idx = cart_item["orig_idx"]
@@ -144,7 +144,7 @@ else:
                     st.success("✨ Заявка принята! Директор свяжется с вами в Telegram для подтверждения предоплаты.")
                     time.sleep(1.5)
                     st.rerun()
-       else: st.error("⚠️ Заполните Имя и Telegram!")
+else: st.error("⚠️ Заполните Имя и Telegram!")
 st.write("---")
 # ================= КАБИНЕТ ДИРЕКТОРА VAMYR (ЗАПАРОЛЕНО) =================
 st.markdown('### 🔒 Закрытый док генерального директора')
